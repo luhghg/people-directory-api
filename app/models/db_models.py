@@ -1,0 +1,51 @@
+from app.db.session import Base
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, Integer, ForeignKey, func
+from typing import Optional
+from enum import Enum
+from datetime import datetime, date
+
+
+
+class UserRole(Enum):
+    VIEWER = "viewer"
+    MANAGER = "manager"
+    HR = "hr_admin"
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[UserRole] = mapped_column(nullable=False)
+
+    person: Mapped[Optional["Person"]] = relationship(back_populates="user")
+
+    person_id: Mapped[int | None] = mapped_column(ForeignKey("persons.id", ondelete="SET NULL"))
+
+    is_active: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+
+
+class Person(Base):
+    __tablename__ = "persons"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    work_email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    phone: Mapped[int] = mapped_column(Integer, unique=True, nullable=False )
+    photo_url: Mapped[str] = mapped_column(String(1024), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="active")
+
+    user: Mapped[Optional["User"]] = relationship(back_populates="person")
+
+    date_of_birth: Mapped[date] = mapped_column(nullable=False)
+    home_adress: Mapped[str] = mapped_column(nullable=False)
+    national_id: Mapped[int] = mapped_column(nullable=False)
+    
+
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
