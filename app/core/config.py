@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASS: str
     DB_NAME: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    SECRET_KEY: str
 
     @property
     def DATABASE_URL_asyncpg(self):
