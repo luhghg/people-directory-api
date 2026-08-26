@@ -26,3 +26,12 @@ async def create_user(session: AsyncSession, user_data: UserCreate ) -> User:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username or email already exists")
     await session.refresh(new_user)
     return new_user
+
+
+async def get_user_by_id(session: AsyncSession, id: int) -> User | None:
+    query = (
+        select(User)
+        .where(User.id == id)
+    )
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
