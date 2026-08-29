@@ -16,7 +16,7 @@ from typing import Annotated
 
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 ph = PasswordHasher()
 
@@ -75,3 +75,9 @@ async def get_current_user(session: Annotated[AsyncSession, Depends(get_session)
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid token")
     return result
+
+
+async def get_current_hr_admin(session: Annotated[AsyncSession, Depends(get_session)], current_user = Depends(get_current_user)):
+    if current_user.role.value != "hr_admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough access rigths")
+    return current_user

@@ -13,6 +13,13 @@ class UserRole(Enum):
     HR = "hr_admin"
 
 
+class EmploymentType(Enum):
+    FULLTIME = "full_time"
+    PARTTIME = "parttime"
+    CONTRACTOR = "contractor"
+    INTER = "intern"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -45,7 +52,31 @@ class Person(Base):
     date_of_birth: Mapped[date] = mapped_column(nullable=False)
     home_adress: Mapped[str] = mapped_column(nullable=False)
     national_id: Mapped[int] = mapped_column(nullable=False)
-    
+
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+
+
+# class Employment(Base):
+#     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+#     job_title: Mapped[str] = mapped_column(String(128), nullable=False)
+#     department:
+
+#     manager_id: Mapped[int] = mapped_column(ForeignKey())
+
+#     start_date: Mapped[datetime] = mapped_column(nullable=False)
+#     end_date: Mapped[datetime] = mapped_column(nullable=True)
+
+#     salary: Mapped[float] = mapped_column()
+#     currency: Mapped[]
+
+
+# class Classification(Base):
+#     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+#     employment_type: Mapped[EmploymentType] = mapped_column(nullable=)
+#     grade: Mapped[int] = mapped_column()
+#     is_
+
+
+#     person_id: Mapped[int] = mapped_column(ForeignKey(), onupdate="SET NULL")
