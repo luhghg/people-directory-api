@@ -4,7 +4,8 @@ from sqlalchemy import String, Integer, ForeignKey, func
 from typing import Optional
 from enum import Enum
 from datetime import datetime, date
-
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy import String
 
 
 class UserRole(Enum):
@@ -18,6 +19,11 @@ class EmploymentType(Enum):
     PARTTIME = "parttime"
     CONTRACTOR = "contractor"
     INTER = "intern"
+
+class Action(Enum):
+    READ = "read"
+    UPDATE = "update"
+    DELETE = "delete"
 
 
 class User(Base):
@@ -56,6 +62,25 @@ class Person(Base):
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+
+
+class AuditLog(Base):
+    __tablename__ = "auditlog"
+
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    actor_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+
+    person_id: Mapped[int] = mapped_column(ForeignKey("persons.id", ondelete="CASCADE"))
+
+    field_name: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
+    action: Mapped[Action] = mapped_column(nullable=False)
+    ip_adress: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+
+
+
 
 
 # class Employment(Base):
