@@ -56,7 +56,7 @@ async def get_person_by_id(id: int, request: Request, session: Annotated[AsyncSe
     return got_person_admin
 
 
-@router.patch(path="/{id}", response_model=PersonsResponseAdmin, dependencies=[])
+@router.patch(path="/{id}", response_model=PersonsResponseAdmin)
 async def update_person(id: int,request: Request, new_person: PersonUpdate, session: Annotated[AsyncSession, Depends(get_session)],current_user = Depends(get_current_hr_admin) ) -> PersonsResponseAdmin:
     result = await update_person_service(session=session, id=id, new_person=new_person)
     if request.client is not None:

@@ -26,6 +26,24 @@ class Action(Enum):
     DELETE = "delete"
 
 
+class Department(Enum):
+    ENGINEERING = "engineering"
+    SALES = "sales"
+    MARKETING = "marketing"
+    FINANCE = "finance"
+    HR = "hr"
+    SUPPORT = "support"
+    OPERATIONS = "operations"
+
+class Grade(Enum):
+    JUNIOR = "junior"
+    MIDDLE = "middle"
+    SENIOR = "senior"
+    LEAD = "lead"
+    PRINCIPAL = "principal"
+
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -83,25 +101,38 @@ class AuditLog(Base):
 
 
 
-# class Employment(Base):
-#     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-#     job_title: Mapped[str] = mapped_column(String(128), nullable=False)
-#     department:
+class Employment(Base):
+    __tablename__ = "employments"
 
-#     manager_id: Mapped[int] = mapped_column(ForeignKey())
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
-#     start_date: Mapped[datetime] = mapped_column(nullable=False)
-#     end_date: Mapped[datetime] = mapped_column(nullable=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey("persons.id", ondelete="CASCADE"))
 
-#     salary: Mapped[float] = mapped_column()
-#     currency: Mapped[]
+    job_title: Mapped[str] = mapped_column(String(128), nullable=False)
+    department: Mapped[Department] = mapped_column(nullable=False)
+
+    manager_id: Mapped[int] = mapped_column(ForeignKey("persons.id"))
+
+    start_date: Mapped[datetime] = mapped_column(nullable=False)
+    end_date: Mapped[datetime] = mapped_column(nullable=True)
+
+    is_current: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+
+    salary: Mapped[float] = mapped_column()
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
 
 
-# class Classification(Base):
-#     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-#     employment_type: Mapped[EmploymentType] = mapped_column(nullable=)
-#     grade: Mapped[int] = mapped_column()
-#     is_
 
+class Classification(Base):
+    __tablename__ = "classifications"
 
-#     person_id: Mapped[int] = mapped_column(ForeignKey(), onupdate="SET NULL")
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey("persons.id"))
+    employment_type: Mapped[EmploymentType] = mapped_column(nullable=False)
+    grade: Mapped[Grade] = mapped_column(nullable=False)
+    is_exempt: Mapped[bool]
+    effective_from: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+    effective_to: Mapped[datetime] = mapped_column(nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
