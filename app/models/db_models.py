@@ -42,6 +42,16 @@ class Grade(Enum):
     LEAD = "lead"
     PRINCIPAL = "principal"
 
+class RecordType(Enum):
+    NDA = "nda"
+    BACKGROUNDCHECK = "background_check"
+    CERTIFICATION = "certification"
+    VISA = "visa"
+
+class Status(Enum):
+    PENDING = "pending"
+    VALID = "valid"
+    EXPIRED = "expired"
 
 
 class User(Base):
@@ -136,3 +146,17 @@ class Classification(Base):
     effective_to: Mapped[datetime] = mapped_column(nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+
+
+class CompilianceRecord(Base):
+    __tablename__ = "compiliancerecords"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey("persons.id"))
+    record_type: Mapped[RecordType] = mapped_column(nullable=False)
+    status: Mapped[Status] = mapped_column(nullable=False)
+    issued_date: Mapped[datetime] = mapped_column(nullable=False)
+    expires_date: Mapped[datetime] = mapped_column(nullable=False)
+    notes: Mapped[str | None]
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+    document_url:  Mapped[str | None]

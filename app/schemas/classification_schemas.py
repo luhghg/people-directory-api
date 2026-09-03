@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from app.models.db_models import EmploymentType, Grade
 from datetime import datetime
 
@@ -20,3 +20,5 @@ class ClassificationResponse(BaseModel):
     effective_to: datetime | None
 
     created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

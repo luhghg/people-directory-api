@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.models.db_models import Department
 from datetime import datetime
 
@@ -19,6 +19,9 @@ class EmploymentResponse(BaseModel):
 
     salary: float
     currency: str = Field(max_length=3)
+
+    model_config=ConfigDict(from_attributes=True)
+
 
 class EmploymentCreate(BaseModel):
         person_id: int
