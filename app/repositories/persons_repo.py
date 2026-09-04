@@ -7,10 +7,29 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 
 
-async def get_persons_repo(session: AsyncSession) ->Sequence[Person]:
+async def get_persons_repo(session: AsyncSession, first_name: str | None = None,
+                           last_name: str | None = None, search: str | None = None,
+                             limit: int = 10, offset: int = 0) ->Sequence[Person]:
     query=(
         select(Person)
     )
+    if first_name is not None:
+         query = query.where(Person.first_name == first_name)
+
+    if last_name is not None:
+         query = query.where(Person.last_name == last_name)
+
+    search_param = f"%{search}%"
+
+    if search is not None:
+        query = query.where(
+                           (Person.first_name.ilike(search_param))|
+                           (Person.last_name.ilike(search_param))
+                           )
+
+
+    query = query.limit(limit=limit).offset(offset=offset)
+
     result = await session.execute(query)
     return result.scalars().all()
 
@@ -71,4 +90,3 @@ async def update_person_repo(session: AsyncSession, person: Person, new_person: 
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username or email already exists")
     await session.refresh(person)
     return person
-   

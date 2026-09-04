@@ -6,8 +6,11 @@ from typing import Sequence
 from app.models.db_models import Person
 from fastapi import HTTPException, status
 
-async def get_persons_open_service(session: AsyncSession) -> Sequence[Person]:
-    persons = await get_persons_repo(session=session)
+async def get_persons_open_service(session: AsyncSession, first_name: str | None = None,
+                           last_name: str | None = None, search: str | None = None,
+                             limit: int = 10, offset: int = 0) -> Sequence[Person]:
+    persons = await get_persons_repo(session=session, first_name=first_name, last_name=last_name,
+                                     search=search, limit=limit, offset=offset)
     return persons
 
 

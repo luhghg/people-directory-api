@@ -20,8 +20,12 @@ from fastapi import Request
 router = APIRouter(prefix="/people", tags=["people"])
 
 @router.get(path="/", response_model=list[PersonsResponse], dependencies=[Depends(get_current_user)])
-async def get_people(session: Annotated[AsyncSession, Depends(get_session)]) -> list[PersonsResponse]:
-    guys = await get_persons_open_service(session=session)
+async def get_people(session: Annotated[AsyncSession, Depends(get_session)],first_name: str | None = None,
+                    last_name: str | None = None, search: str | None = None,
+                    limit: int = 10, offset: int = 0
+                    ) -> list[PersonsResponse]:
+    guys = await get_persons_open_service(session=session, first_name=first_name, last_name=last_name,
+                                          search=search, limit=limit, offset=offset)
     return guys #type: ignore
 
 
