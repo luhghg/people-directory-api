@@ -33,7 +33,7 @@ def verify_pass_argon2(plain_pass: str, hashed_pass: str) -> bool:
 
 async def register_user(session: AsyncSession, user_data: UserCreate) -> UserResponse:
     if await get_user_by_email(session = session, email = user_data.email):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email alresdy registred")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registred")
     hash_pass = hash_pass_argon2(password=user_data.password)
     user_data.password = hash_pass
     create_new_user = await create_user(session=session, user_data=user_data)
