@@ -7,7 +7,12 @@ from httpx import AsyncClient, ASGITransport
 from app.db.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from collections.abc import AsyncGenerator
-
+import jwt
+from sqlalchemy import update
+from app.models.db_models import User, UserRole
+from app.core.config import settings
+from fastapi import HTTPException, status
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 
 
@@ -51,3 +56,53 @@ async def client(prepare_database):
 
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def sama_voydet(client):
+    response_reg = await client.post(
+        "/auth/register", json={"email": "tet12345@gmail.com", "password": "12345test"}
+    )
+    if response_reg.status_code == 400:
+        raise Exception("Email already registred")
+    response_log = await client.post(
+                                    "/auth/login", data={"username": "tet12345@gmail.com", "password": "12345test"}
+                                    )
+    data = response_log.json()
+    token = data["access_token"]
+    return token
+
+
+@pytest.fixture
+async def sama_voydet_hr(sama_voydet, db_session):
+    token = sama_voydet
+    try:
+        payload = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=["HS256"])
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+    except InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    user_id = payload.get("sub")
+    user_id_str = str(user_id)
+    query = (
+            update(User)
+            .where(User.id == int(user_id_str))
+            .values(role = UserRole.HR)
+            )
+    await db_session.execute(query)
+    await db_session.commit()
+    return token
+
+@pytest.fixture
+async def sama_voydet_id_usera(sama_voydet, db_session):
+    token = sama_voydet
+    try:
+        payload = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=["HS256"])
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+    except InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    user_id = payload.get("sub")
+    user_id_int = int(user_id)
+
+    return user_id_int
