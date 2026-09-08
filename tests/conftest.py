@@ -32,11 +32,14 @@ async def prepare_database():
         await session.run_sync(Base.metadata.drop_all)
 
 
+
 @pytest.fixture
 async def db_session(prepare_database) -> AsyncGenerator[AsyncSession, None] :
 
     async with async_session() as session:
         yield session
+
+
 
 
 @pytest.fixture
@@ -58,6 +61,7 @@ async def client(prepare_database):
     app.dependency_overrides.clear()
 
 
+
 @pytest.fixture
 async def sama_voydet(client):
     response_reg = await client.post(
@@ -73,9 +77,20 @@ async def sama_voydet(client):
     return token
 
 
+
 @pytest.fixture
-async def sama_voydet_hr(sama_voydet, db_session):
-    token = sama_voydet
+async def sama_voydet_hr(client, db_session):
+    response_reg = await client.post(
+            "/auth/register", json={"email": "testhr_admin1234@gmail.com", "password": "12345testhr"}
+        )
+    if response_reg.status_code == 400:
+        raise Exception("Email already registred")
+    response_log = await client.post(
+                                        "/auth/login", data={"username": "testhr_admin1234@gmail.com", "password": "12345testhr"}
+                                        )
+    data = response_log.json()
+    token = data["access_token"]
+
     try:
         payload = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=["HS256"])
     except ExpiredSignatureError:
@@ -92,6 +107,8 @@ async def sama_voydet_hr(sama_voydet, db_session):
     await db_session.execute(query)
     await db_session.commit()
     return token
+
+
 
 @pytest.fixture
 async def sama_voydet_id_usera(sama_voydet, db_session):
