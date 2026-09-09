@@ -1,0 +1,5 @@
+name: People-directory
+
+on:
+  push
+  
