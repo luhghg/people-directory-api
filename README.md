@@ -1,16 +1,16 @@
 # People Directory API
 
-Внутренний справочник сотрудников компании: хранит данные о людях и отдаёт их по запросу, но показывает разным ролям разный набор полей — и записывает в журнал каждое обращение к закрытым данным.
+An internal company people directory: stores data about employees and serves it on request, but shows a different set of fields depending on the requester's role — and logs every access to restricted data.
 
-## Идея проекта
+## Idea
 
-Обычный CRUD-справочник умеет реализовать почти любой. Смысл этого проекта — в том, что происходит поверх CRUD: один и тот же эндпоинт `GET /people/{id}` отдаёт разный набор полей в зависимости от того, кто его вызвал. Обычный сотрудник (`viewer`) видит только открытые данные — имя, должность, отдел, рабочий email. HR-администратор (`hr_admin`) видит всё, включая дату рождения, домашний адрес и национальный идентификатор. Каждое обращение hr_admin к этим закрытым полям фиксируется в журнале аудита — кто, у кого и какие именно поля посмотрел или изменил.
+A plain CRUD directory is something almost anyone can build. The point of this project is what happens on top of the CRUD: the same endpoint, `GET /people/{id}`, returns a different set of fields depending on who called it. A regular employee (`viewer`) sees only open data — name, job title, department, work email. An HR administrator (`hr_admin`) sees everything, including date of birth, home address, and national ID. Every time an `hr_admin` accesses those restricted fields, it is recorded in an audit log — who looked at whose data, and which specific fields were read or changed.
 
-Отдельно — данные о человеке как о сотруднике (`Person`) и учётная запись для входа в систему (`User`) сознательно разведены на две разные сущности со связью один-к-одному, необязательной в обе стороны. `Person` существует у каждого, кто когда-либо был сотрудником компании, даже у уволенных, даже у тех, кто никогда не пользовался этой системой. `User` — только у тех, кому реально нужен доступ. `Person` ничего не знает о механизме авторизации: ссылка между сущностями хранится в `User`, а не наоборот.
+Separately, data about a person as an employee (`Person`) and a login account (`User`) are deliberately kept as two different entities, connected by an optional one-to-one relationship. `Person` exists for anyone who has ever been an employee, even someone terminated, even someone who never had access to this system. `User` exists only for those who actually need access. `Person` knows nothing about the authorization mechanism: the link between the two lives on `User`, not the other way around.
 
-## Пример: один эндпоинт, два разных ответа
+## Example: one endpoint, two different responses
 
-`GET /people/{id}` с токеном обычного пользователя:
+`GET /people/{id}` with a regular user's token:
 
 ```json
 {
@@ -22,7 +22,7 @@
 }
 ```
 
-Тот же самый запрос, тот же самый `id`, с токеном hr_admin:
+The same request, the same `id`, with an hr_admin token:
 
 ```json
 {
@@ -38,40 +38,40 @@
 }
 ```
 
-Второй запрос дополнительно создаёт запись в `AuditLog`: кто смотрел, чью карточку, какие именно закрытые поля были показаны.
+The second request additionally creates a record in `AuditLog`: who looked, whose record it was, and which restricted fields were shown.
 
-## Модель данных
+## Data model
 
-- **User** — учётная запись: email, хеш пароля, роль (`viewer` / `manager` / `hr_admin`), необязательная ссылка на `Person`.
-- **Person** — карточка сотрудника: открытые поля (имя, фамилия, рабочий email, телефон, фото, статус) и закрытые (дата рождения, домашний адрес, национальный ID).
-- **Employment** — история должностей: у одного `Person` может быть несколько записей одновременно и во времени (переводы, повышения). Зарплата хранится здесь, а не в `Person`, потому что она меняется вместе с должностью — так автоматически получается история изменений. `manager_id` ссылается на `Person`, а не на `User`, потому что "кто твой руководитель" — факт о трудоустройстве, а не о наличии у него учётной записи.
-- **Classification** — формальный статус трудоустройства (полная ставка / подработка / контрактор / стажёр) и грейд, тоже история, несколько записей на человека.
-- **ComplianceRecord** — записи о формальных требованиях (NDA, проверка биографии, сертификаты, виза) — у одного человека может быть несколько записей разных типов одновременно.
-- **AuditLog** — только запись, без обновлений и удалений: кто, у кого и какие поля прочитал или изменил, с IP-адресом и временем.
+- **User** — a login account: email, password hash, role (`viewer` / `manager` / `hr_admin`), an optional link to a `Person`.
+- **Person** — an employee record: open fields (first name, last name, work email, phone, photo, status) and restricted ones (date of birth, home address, national ID).
+- **Employment** — job history: a single `Person` can have several records at once and over time (transfers, promotions). Salary lives here rather than on `Person`, because it changes together with the job title — which automatically produces a history of salary changes. `manager_id` points to a `Person`, not a `User`, because "who your manager is" is a fact about employment, not about whether that manager has a login account.
+- **Classification** — formal employment status (full time / part time / contractor / intern) and grade, also kept as history, several records per person.
+- **ComplianceRecord** — records of formal requirements (NDA, background check, certifications, visa) — a person can have several records of different types at the same time.
+- **AuditLog** — insert-only, no updates or deletes: who accessed whose data, which fields were read or changed, with IP address and timestamp.
 
-Роль пользователя не хранится в самом токене — при каждом запросе она заново читается из базы, чтобы изменение роли или блокировка аккаунта применялись немедленно, а не только после переиздания токена.
+The user's role is not stored in the token itself — it is read from the database on every request, so that a role change or an account being deactivated takes effect immediately, without waiting for the token to be reissued.
 
-## Стек технологий
+## Tech stack
 
 - FastAPI
 - PostgreSQL
 - SQLAlchemy (async) + asyncpg
-- Alembic — миграции
-- Argon2 — хеширование паролей
-- JWT (PyJWT) — авторизация
+- Alembic for migrations
+- Argon2 for password hashing
+- JWT (PyJWT) for authorization
 - Docker / Docker Compose
-- pytest + pytest-asyncio + httpx (ASGI-транспорт)
+- pytest + pytest-asyncio + httpx (ASGI transport)
 
-## Эндпоинты
+## Endpoints
 
 ```
 POST   /auth/register
 POST   /auth/login
 
-GET    /people                        список, поиск, фильтры, пагинация
-POST   /people                        только hr_admin
-GET    /people/{id}                   набор полей зависит от роли
-PATCH  /people/{id}                   только hr_admin
+GET    /people                        list, search, filters, pagination
+POST   /people                        hr_admin only
+GET    /people/{id}                   fields returned depend on role
+PATCH  /people/{id}                   hr_admin only
 
 GET    /people/{id}/employments
 POST   /people/{id}/employments
@@ -82,30 +82,30 @@ POST   /people/{id}/classifications
 GET    /people/{id}/compliance
 POST   /people/{id}/compliance
 
-GET    /audit-logs                    только hr_admin
+GET    /audit-logs                    hr_admin only
 ```
 
-Полная интерактивная документация — на `/docs` после запуска (Swagger UI).
+Full interactive documentation is available at `/docs` once the app is running (Swagger UI).
 
-## Запуск
+## Running the project
 
-1. Скопировать `.env.example` в `.env` и заполнить значения (данные для подключения к Postgres, `SECRET_KEY`, срок действия токена).
-2. Запустить:
+1. Copy `.env.example` to `.env` and fill in the values (Postgres connection details, `SECRET_KEY`, token expiry time).
+2. Start the stack:
 
 ```
 docker compose up -d --build
 ```
 
-Контейнер `web` сам дожидается готовности базы и накатывает миграции Alembic при старте. Приложение будет доступно на `http://localhost:8080`, документация — на `http://localhost:8080/docs`.
+The `web` container waits for the database to be ready and applies Alembic migrations on startup. The app will be available at `http://localhost:8080`, documentation at `http://localhost:8080/docs`.
 
-## Тесты
+## Tests
 
 ```
 pytest
 ```
 
-Набор тестов использует отдельную тестовую базу данных и реальные HTTP-запросы к приложению (через `httpx.AsyncClient` с ASGI-транспортом, без поднятия сетевого порта). Покрыты: аутентификация, ролевая видимость полей, отказ в доступе для неавторизованных и не-hr_admin запросов, запись и отсутствие записи в журнале аудита в зависимости от того, показывались ли закрытые поля, история записей у Employment/Classification/ComplianceRecord.
+The test suite uses a separate test database and sends real HTTP requests to the application (via `httpx.AsyncClient` with an ASGI transport, without opening a network port). Covered: authentication, role-based field visibility, access being denied for unauthenticated and non-hr_admin requests, an audit log entry being created (or not) depending on whether restricted fields were shown, and multiple-record history for Employment/Classification/ComplianceRecord.
 
-## Не реализовано
+## Not implemented
 
-Обновление и удаление для Employment/Classification/ComplianceRecord, обновление ролей через API (роль назначается напрямую в базе), обновление и отзыв токенов.
+Updating and deleting Employment/Classification/ComplianceRecord records, changing roles through the API (roles are assigned directly in the database), token refresh and revocation.
