@@ -109,3 +109,4 @@ The test suite uses a separate test database and sends real HTTP requests to the
 ## Not implemented
 
 Updating and deleting Employment/Classification/ComplianceRecord records, changing roles through the API (roles are assigned directly in the database), token refresh and revocation.
+
