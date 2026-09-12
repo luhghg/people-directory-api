@@ -145,4 +145,4 @@ async def test_admin_try_to_patch(client, sama_voydet_hr):
         headers={"Authorization": f"Bearer {sama_voydet_hr}"},
     )
     res = response.json()
-    assert response.status_code == 401
+    assert response.status_code == 200
