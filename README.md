@@ -106,8 +106,14 @@ pytest
 
 The test suite uses a separate test database and sends real HTTP requests to the application (via `httpx.AsyncClient` with an ASGI transport, without opening a network port). Covered: authentication, role-based field visibility, access being denied for unauthenticated and non-hr_admin requests, an audit log entry being created (or not) depending on whether restricted fields were shown, and multiple-record history for Employment/Classification/ComplianceRecord.
 
+## Continuous Integration
+
+Every push and pull request targeting `main` runs the test suite in GitHub Actions against a fresh Postgres service container. The `main` branch requires a pull request and a passing check before a merge is allowed.
+
+Continuous deployment was left out on purpose — this project isn't deployed anywhere, so an automated deployment step wouldn't have anywhere to deploy to.
+
 ## Not implemented
 
-Updating and deleting Employment/Classification/ComplianceRecord records, changing roles through the API (roles are assigned directly in the database), token refresh and revocation.
+Changing roles through the API (roles are assigned directly in the database), token refresh and revocation.
 
 
