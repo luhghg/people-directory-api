@@ -38,6 +38,12 @@ jobs:
 
       - run: python -m pytest
 
+  # deploy:
+  #   needs: test
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+
+
 
 env:
   DB_HOST: localhost
