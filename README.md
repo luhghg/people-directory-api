@@ -4,7 +4,9 @@ An internal company people directory: stores data about employees and serves it 
 
 ## Idea
 
-A plain CRUD directory is something almost anyone can build. The point of this project is what happens on top of the CRUD: the same endpoint, `GET /people/{id}`, returns a different set of fields depending on who called it. A regular employee (`viewer`) sees only open data — name, job title, department, work email. An HR administrator (`hr_admin`) sees everything, including date of birth, home address, and national ID. Every time an `hr_admin` accesses those restricted fields, it is recorded in an audit log — who looked at whose data, and which specific fields were read or changed.
+A plain CRUD directory is something almost anyone can build. The point of this project is what happens on top of the CRUD: the same endpoint, `GET /people/{id}`, returns a different set of fields depending on who called it. A regular employee (`viewer`) sees only open data — name, work email, phone, photo. An HR administrator (`hr_admin`) sees everything, including date of birth, home address, and national ID. Every time an `hr_admin` accesses those restricted fields, it is recorded in an audit log — who looked at whose data, and which specific fields were read or changed.
+
+Job title, department, salary and other employment details live on a separate entity (`Employment`) and, right now, its endpoints are `hr_admin`-only regardless of caller, so a `viewer` cannot reach them at all yet.
 
 Separately, data about a person as an employee (`Person`) and a login account (`User`) are deliberately kept as two different entities, connected by an optional one-to-one relationship. `Person` exists for anyone who has ever been an employee, even someone terminated, even someone who never had access to this system. `User` exists only for those who actually need access. `Person` knows nothing about the authorization mechanism: the link between the two lives on `User`, not the other way around.
 
@@ -42,8 +44,8 @@ The second request additionally creates a record in `AuditLog`: who looked, whos
 
 ## Data model
 
-- **User** — a login account: email, password hash, role (`viewer` / `manager` / `hr_admin`), an optional link to a `Person`.
-- **Person** — an employee record: open fields (first name, last name, work email, phone, photo, status) and restricted ones (date of birth, home address, national ID).
+- **User** — a login account: email, password hash, role (`viewer` / `manager` / `hr_admin`), an optional link to a `Person`. The `manager` role exists in the data model but every authorization check in the code currently only distinguishes `hr_admin` from everyone else, so `manager` behaves exactly like `viewer` for now — there is no manager-specific scoping (e.g. seeing only direct reports) implemented yet.
+- **Person** — an employee record: open fields (first name, last name, work email, phone, photo, status) and restricted ones (date of birth, home address, national ID). `status` exists on the model but isn't returned by any endpoint yet.
 - **Employment** — job history: a single `Person` can have several records at once and over time (transfers, promotions). Salary lives here rather than on `Person`, because it changes together with the job title — which automatically produces a history of salary changes. `manager_id` points to a `Person`, not a `User`, because "who your manager is" is a fact about employment, not about whether that manager has a login account.
 - **Classification** — formal employment status (full time / part time / contractor / intern) and grade, also kept as history, several records per person.
 - **ComplianceRecord** — records of formal requirements (NDA, background check, certifications, visa) — a person can have several records of different types at the same time.
@@ -73,14 +75,14 @@ POST   /people                        hr_admin only
 GET    /people/{id}                   fields returned depend on role
 PATCH  /people/{id}                   hr_admin only
 
-GET    /people/{id}/employments
-POST   /people/{id}/employments
+GET    /people/{id}/employments       hr_admin only
+POST   /people/{id}/employments       hr_admin only
 
-GET    /people/{id}/classifications
-POST   /people/{id}/classifications
+GET    /people/{id}/classifications   hr_admin only
+POST   /people/{id}/classifications   hr_admin only
 
-GET    /people/{id}/compliance
-POST   /people/{id}/compliance
+GET    /people/{id}/compliance        hr_admin only
+POST   /people/{id}/compliance        hr_admin only
 
 GET    /audit-logs                    hr_admin only
 ```
